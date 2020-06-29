@@ -53,5 +53,20 @@ type URLListQuery struct {
 type URLListReadyEvent struct {
 	BaseMessage
 
-	URLs []URL
+	URLs []URL `json:"urls"`
+}
+
+/****************************************************/
+
+type LongURLQuery struct {
+	BaseMessage
+
+	ShortPath string `json:"shortPath"`
+}
+
+type LongURLReadyEvent struct {
+	BaseMessage
+
+	ShortPath string `json:"shortPath"`
+	LongURL   string `json:"longURL"`
 }
