@@ -46,8 +46,8 @@ type URLListQuery struct {
 	BaseMessage
 
 	Username string `json:"username"`
-	Offset   uint   `json:"offset"`
-	Limit    uint   `json:"limit"`
+	Offset   int    `json:"offset"`
+	Limit    int    `json:"limit"`
 }
 
 type URLListReadyEvent struct {
