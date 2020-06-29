@@ -1,7 +1,7 @@
 package consumer
 
 import (
-	mux "github.com/h3isenbug/url-shortener/pkg/event-mux"
+	mux "github.com/h3isenbug/url-common/pkg/event-mux"
 	"github.com/streadway/amqp"
 	"sync"
 )

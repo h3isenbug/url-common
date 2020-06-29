@@ -3,7 +3,7 @@ package mux
 import (
 	"encoding/json"
 	"errors"
-	pool "github.com/h3isenbug/url-shortener/pkg/worker-pool"
+	pool "github.com/h3isenbug/url-common/pkg/worker-pool"
 )
 
 type Message struct {
