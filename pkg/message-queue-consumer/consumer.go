@@ -26,15 +26,38 @@ func NewRabbitMQConsumerV1(
 	mqChannel *amqp.Channel,
 	ack func(tag uint64),
 	messageMux mux.MessageMux,
-	queue string,
-) MessageQueueConsumer {
+	exchangeName string,
+) (MessageQueueConsumer, error) {
+	var err = mqChannel.ExchangeDeclare(
+		exchangeName,
+		"fanout",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	queue, err := mqChannel.QueueDeclare("", false, false, true, false, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	err = mqChannel.QueueBind(queue.Name, "", "logs", false, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	return &RabbitMQConsumerV1{
 		messageMux: messageMux,
 		shutdown:   false,
 		mqChannel:  mqChannel,
 		ack:        ack,
-		queue:      queue,
-	}
+		queue:      queue.Name,
+	}, nil
 }
 
 func (consumer RabbitMQConsumerV1) ConsumeMessages() error {
