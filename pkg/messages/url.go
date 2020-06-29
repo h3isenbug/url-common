@@ -53,7 +53,7 @@ type URLListQuery struct {
 type URLListReadyEvent struct {
 	BaseMessage
 
-	URLs []URL `json:"urls"`
+	URLs []*URL `json:"urls"`
 }
 
 /****************************************************/
