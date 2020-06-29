@@ -53,6 +53,10 @@ type URLListQuery struct {
 type URLListReadyEvent struct {
 	BaseMessage
 
+	Username string `json:"username"`
+	Offset   int    `json:"offset"`
+	Limit    int    `json:"Limit"`
+
 	URLs []*URL `json:"urls"`
 }
 
