@@ -28,7 +28,7 @@ func NewRabbitMQQueueConsumerV1(
 	messageMux mux.MessageMux,
 	queueName string,
 ) (MessageQueueConsumer, error) {
-	queue, err := mqChannel.QueueDeclare(queueName, true, false, true, false, nil)
+	queue, err := mqChannel.QueueDeclare(queueName, true, false, false, false, nil)
 	if err != nil {
 		return nil, err
 	}
