@@ -1,9 +1,10 @@
 package consumer
 
 import (
+	"sync"
+
 	mux "github.com/h3isenbug/url-common/pkg/event-mux"
 	"github.com/streadway/amqp"
-	"sync"
 )
 
 type MessageQueueConsumer interface {
@@ -13,7 +14,6 @@ type MessageQueueConsumer interface {
 
 type RabbitMQConsumerV1 struct {
 	messageMux mux.MessageMux
-	shutdown   bool
 	mqChannel  *amqp.Channel
 	ack        func(tag uint64)
 
@@ -22,40 +22,22 @@ type RabbitMQConsumerV1 struct {
 	wg *sync.WaitGroup
 }
 
-func NewRabbitMQConsumerV1(
+func NewRabbitMQQueueConsumerV1(
 	mqChannel *amqp.Channel,
 	ack func(tag uint64),
 	messageMux mux.MessageMux,
-	exchangeName string,
+	queueName string,
 ) (MessageQueueConsumer, error) {
-	var err = mqChannel.ExchangeDeclare(
-		exchangeName,
-		"fanout",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	queue, err := mqChannel.QueueDeclare("", false, false, true, false, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	err = mqChannel.QueueBind(queue.Name, "", "logs", false, nil)
+	queue, err := mqChannel.QueueDeclare(queueName, true, false, true, false, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	return &RabbitMQConsumerV1{
 		messageMux: messageMux,
-		shutdown:   false,
 		mqChannel:  mqChannel,
 		ack:        ack,
+		nack:       nack,
 		queue:      queue.Name,
 	}, nil
 }
@@ -74,8 +56,7 @@ func (consumer RabbitMQConsumerV1) ConsumeMessages() error {
 		return err
 	}
 
-	for !consumer.shutdown {
-		var message = <-messages
+	for message := range messages {
 		consumer.messageMux.Handle(message.Body, func() { consumer.ack(message.DeliveryTag) })
 	}
 
@@ -83,6 +64,5 @@ func (consumer RabbitMQConsumerV1) ConsumeMessages() error {
 }
 
 func (consumer RabbitMQConsumerV1) GracefulShutdown() error {
-	consumer.shutdown = true
 	return consumer.mqChannel.Close()
 }
