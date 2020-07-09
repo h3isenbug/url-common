@@ -26,12 +26,11 @@ type WorkerPoolV1 struct {
 	workerCount    int
 	jobAddDeadline time.Duration
 
-	shutdown bool
-	wg       *sync.WaitGroup
+	wg *sync.WaitGroup
 }
 
 func (pool WorkerPoolV1) GracefulShutdown() {
-	pool.shutdown = true
+	close(pool.distributor)
 	pool.wg.Wait()
 }
 
@@ -41,7 +40,6 @@ func NewWorkerPoolV1(workerCount int, jobAddDeadline time.Duration) WorkerPool {
 
 	return &WorkerPoolV1{
 		distributor:    make(chan jobItem, 0),
-		shutdown:       false,
 		workerCount:    workerCount,
 		jobAddDeadline: jobAddDeadline,
 		wg:             wg,
@@ -57,8 +55,7 @@ func (pool WorkerPoolV1) Run() {
 }
 
 func (pool WorkerPoolV1) worker() {
-	for !pool.shutdown {
-		var jobItem = <-pool.distributor
+	for jobItem := range pool.distributor {
 		if err := jobItem.job(); err != nil {
 			jobItem.onSuccess()
 		}
