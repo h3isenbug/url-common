@@ -37,7 +37,6 @@ func NewRabbitMQQueueConsumerV1(
 		messageMux: messageMux,
 		mqChannel:  mqChannel,
 		ack:        ack,
-		nack:       nack,
 		queue:      queue.Name,
 	}, nil
 }
