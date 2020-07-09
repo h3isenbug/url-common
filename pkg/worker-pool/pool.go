@@ -4,6 +4,8 @@ import (
 	"errors"
 	"sync"
 	"time"
+
+	log2 "github.com/h3isenbug/url-common/pkg/services/log"
 )
 
 type WorkerPool interface {
@@ -25,6 +27,7 @@ type WorkerPoolV1 struct {
 	distributor    chan jobItem
 	workerCount    int
 	jobAddDeadline time.Duration
+	logService     log2.LogService
 
 	wg *sync.WaitGroup
 }
@@ -34,7 +37,7 @@ func (pool WorkerPoolV1) GracefulShutdown() {
 	pool.wg.Wait()
 }
 
-func NewWorkerPoolV1(workerCount int, jobAddDeadline time.Duration) WorkerPool {
+func NewWorkerPoolV1(logService log2.LogService, workerCount int, jobAddDeadline time.Duration) WorkerPool {
 	var wg = &sync.WaitGroup{}
 	wg.Add(workerCount)
 
@@ -43,6 +46,7 @@ func NewWorkerPoolV1(workerCount int, jobAddDeadline time.Duration) WorkerPool {
 		workerCount:    workerCount,
 		jobAddDeadline: jobAddDeadline,
 		wg:             wg,
+		logService:     logService,
 	}
 }
 
@@ -57,8 +61,11 @@ func (pool WorkerPoolV1) Run() {
 func (pool WorkerPoolV1) worker() {
 	for jobItem := range pool.distributor {
 		if err := jobItem.job(); err != nil {
-			jobItem.onSuccess()
+			pool.logService.Error("job failed: %s", err.Error())
+			continue
 		}
+
+		jobItem.onSuccess()
 	}
 	pool.wg.Done()
 }
